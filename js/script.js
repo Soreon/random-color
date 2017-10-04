@@ -10,6 +10,7 @@ let imageData = context.getImageData(0, 0, canvas.width, canvas.height);
 let data = imageData.data;
 context.translate(0.5, 0.5);
 
+// Initialisation de la grille de pixels avec des couleurs aléatiores
 function createColorGrid() {
     let y, x;
     for(y = 0; y < canvasHeight; ++y) {
@@ -23,12 +24,7 @@ function createColorGrid() {
     }
 }
 
-let rgbWorker = new Worker("js/workers/rgb-worker.js");
-let hsvWorker = new Worker("js/workers/hsv-worker.js");
-let hslWorker = new Worker("js/workers/hsl-worker.js");
-let lumWorker = new Worker("js/workers/lum-worker.js");
-let yuvWorker = new Worker("js/workers/yuv-worker.js");
-
+// Callback de réponse des workers
 function workerDone(e) {
     if(!e.data.done) {
         let canvasData = e.data.canvasData;
@@ -38,11 +34,26 @@ function workerDone(e) {
     }
 };
 
-rgbWorker.onmessage = workerDone;
-hsvWorker.onmessage = workerDone;
-hslWorker.onmessage = workerDone;
-lumWorker.onmessage = workerDone;
-yuvWorker.onmessage = workerDone;
+// Function d'appel des workers
+function runWorker(worker) {
+    if(!running) {
+        worker.postMessage({ canvasData: data, canvasWidth: canvasWidth, canvasHeight: canvasHeight });
+        running = true;
+    } else {
+        console.warn("A worker is currently running");
+    }
+}
+
+// Création des workers
+let colorSpaces = ['rgb','hsv','hsl','lum','yuv','lab'];
+let workers = {};
+colorSpaces.forEach(function(colorSpace) {
+    workers[colorSpace + 'Worker'] = new Worker("js/workers/" + colorSpace + "-worker.js");
+    workers[colorSpace + 'Worker'].onmessage = workerDone;
+    document.getElementById(colorSpace + '-sorting').addEventListener('click', () => {
+        runWorker(workers[colorSpace + 'Worker']);
+    });
+}, this);
 
 let i = 0;
 function animate() {
@@ -53,32 +64,3 @@ function animate() {
 createColorGrid();
 context.putImageData(imageData, 0, 0);
 animate();
-
-function runWorker(worker) {
-    if(!running) {
-        worker.postMessage({ canvasData: data, canvasWidth: canvasWidth, canvasHeight: canvasHeight });
-        running = true;
-    } else {
-        console.warn("A worker is currently running");
-    }
-}
-
-document.getElementById('rgb-sorting').addEventListener('click', () => {
-    runWorker(rgbWorker);
-});
-
-document.getElementById('hsl-sorting').addEventListener('click', () => {
-    runWorker(hslWorker);
-});
-
-document.getElementById('hsv-sorting').addEventListener('click', () => {
-    runWorker(hsvWorker);
-});
-
-document.getElementById('lum-sorting').addEventListener('click', () => {
-    runWorker(lumWorker);
-});
-
-document.getElementById('yuv-sorting').addEventListener('click', () => {
-    runWorker(yuvWorker);
-});
