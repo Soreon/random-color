@@ -1,4 +1,5 @@
 let modified = 0;
+let grid = [];
 
 function RGBtoLAB(r, g, b) {
     let x, y, z;
@@ -18,6 +19,19 @@ function RGBtoLAB(r, g, b) {
     return {l:(116 * y) - 16, a:500 * (x - y), b:200 * (y - z)};
 }
 
+function generateGrid(data, canvasWidth, canvasHeight) {
+    let y, x;
+    for(y = 0; y < canvasHeight; y++) {
+        for(x = 0; x < canvasWidth; x++) {
+            let index = (y * canvasWidth + x) * 4;
+            let cell = RGBtoLAB(data[index], data[index + 1], data[index + 2]);
+            grid[index] = cell.l;
+            grid[index + 1] = cell.a;
+            grid[index + 2] = cell.b;
+        }
+    }
+}
+
 function sortPixelsLAB(data, canvasWidth, canvasHeight) {
     let y, x;
     for(y = 0; y < canvasHeight; y++) {
@@ -26,22 +40,25 @@ function sortPixelsLAB(data, canvasWidth, canvasHeight) {
             let index2 = (y * canvasWidth + (x + 1)) * 4;
             let index3 = ((y + 1) * canvasWidth + x) * 4;
         
-            let c1 = RGBtoLAB(data[index], data[index + 1], data[index + 2]);
             if(x + 1 < canvasWidth) {
-                let c2 = RGBtoLAB(data[index2], data[index2 + 1], data[index2 + 2]);
-                if (c1.l > c2.l) {
-                    [data[index], data[index2]] = [data[index2], data[index]];
-                    [data[index + 1], data[index2 + 1]] = [data[index2 + 1], data[index + 1]];
-                    [data[index + 2], data[index2 + 2]] = [data[index2 + 2], data[index + 2]];
+                if (grid[index] > grid[index2]) {
+                    data[index] = [data[index2], data[index2]=data[index]][0];
+                    data[index+1] = [data[index2+1], data[index2+1]=data[index+1]][0];
+                    data[index+2] = [data[index2+2], data[index2+2]=data[index+2]][0];
+                    grid[index] = [grid[index2], grid[index2]=grid[index]][0];
+                    grid[index+1] = [grid[index2+1], grid[index2+1]=grid[index+1]][0];
+                    grid[index+2] = [grid[index2+2], grid[index2+2]=grid[index+2]][0];
                     modified++;
                 }
             }
             if(y + 1 < canvasHeight) {
-                let c3 = RGBtoLAB(data[index3], data[index3 + 1], data[index3 + 2]);
-                if (c1.b < c3.b) {
-                    [data[index], data[index3]] = [data[index3], data[index]];
-                    [data[index + 1], data[index3 + 1]] = [data[index3 + 1], data[index + 1]];
-                    [data[index + 2], data[index3 + 2]] = [data[index3 + 2], data[index + 2]];
+                if (grid[index] < grid[index3]) {
+                    data[index] = [data[index3], data[index3]=data[index]][0];
+                    data[index+1] = [data[index3+1], data[index3+1]=data[index+1]][0];
+                    data[index+2] = [data[index3+2], data[index3+2]=data[index+2]][0];
+                    grid[index] = [grid[index3], grid[index3]=grid[index]][0];
+                    grid[index+1] = [grid[index3+1], grid[index3+1]=grid[index+1]][0];
+                    grid[index+2] = [grid[index3+2], grid[index3+2]=grid[index+2]][0];
                     modified++;
                 }
             }
@@ -54,11 +71,12 @@ self.onmessage = function (e) {
     let canvasData = e.data.canvasData;
     let canvasWidth = e.data.canvasWidth;
     let canvasHeight = e.data.canvasHeight;
+    generateGrid(canvasData, canvasWidth, canvasHeight);
     for(let i = 0; true; i += 1) {
         modified = 0;
         canvasData = sortPixelsLAB(canvasData, canvasWidth, canvasHeight);
         self.postMessage({ canvasData: canvasData, done: false });
-        if(modified < 500) {
+        if(modified < 100) {
             break;
         }
     }

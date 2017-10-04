@@ -10,17 +10,17 @@ function sortPixelsRGB(data, canvasWidth, canvasHeight) {
         
             if(x + 1 < canvasWidth) {
                 if (data[index] > data[index2]) {
-                    [data[index], data[index2]] = [data[index2], data[index]];
-                    [data[index + 1], data[index2 + 1]] = [data[index2 + 1], data[index + 1]];
-                    [data[index + 2], data[index2 + 2]] = [data[index2 + 2], data[index + 2]];
+                    data[index] = [data[index2], data[index2]=data[index]][0];
+                    data[index+1] = [data[index2+1], data[index2+1]=data[index+1]][0];
+                    data[index+2] = [data[index2+2], data[index2+2]=data[index+2]][0];
                     modified++;
                 }
             }
             if(y + 1 < canvasHeight) {
                 if (data[index + 2] > data[index3 + 2]) {
-                    [data[index], data[index3]] = [data[index3], data[index]];
-                    [data[index + 1], data[index3 + 1]] = [data[index3 + 1], data[index + 1]];
-                    [data[index + 2], data[index3 + 2]] = [data[index3 + 2], data[index + 2]];
+                    data[index] = [data[index3], data[index3]=data[index]][0];
+                    data[index+1] = [data[index3+1], data[index3+1]=data[index+1]][0];
+                    data[index+2] = [data[index3+2], data[index3+2]=data[index+2]][0];
                     modified++;
                 }
             }

@@ -1,4 +1,5 @@
 let modified = 0;
+let grid = [];
 
 function rgbToHsl(r, g, b){
     r /= 255, g /= 255, b /= 255;
@@ -7,7 +8,7 @@ function rgbToHsl(r, g, b){
 
     if(max == min){
         h = s = 0; // achromatic
-    }else{
+    } else {
         var d = max - min;
         s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
         switch(max){
@@ -21,6 +22,19 @@ function rgbToHsl(r, g, b){
     return { h: h, s: s, l: l };
 }
 
+function generateGrid(data, canvasWidth, canvasHeight) {
+    let y, x;
+    for(y = 0; y < canvasHeight; y++) {
+        for(x = 0; x < canvasWidth; x++) {
+            let index = (y * canvasWidth + x) * 4;
+            let cell = rgbToHsl(data[index], data[index + 1], data[index + 2]);
+            grid[index] = cell.h;
+            grid[index + 1] = cell.s;
+            grid[index + 2] = cell.l;
+        }
+    }
+}
+
 function sortPixelsHSL(data, canvasWidth, canvasHeight) {
     let y, x;
     for(y = 0; y < canvasHeight; y++) {
@@ -29,22 +43,25 @@ function sortPixelsHSL(data, canvasWidth, canvasHeight) {
             let index2 = (y * canvasWidth + (x + 1)) * 4;
             let index3 = ((y + 1) * canvasWidth + x) * 4;
         
-            let c1 = rgbToHsl(data[index], data[index + 1], data[index + 2]);
             if(x + 1 < canvasWidth) {
-                let c2 = rgbToHsl(data[index2], data[index2 + 1], data[index2 + 2]);
-                if (c1.h > c2.h) {
-                    [data[index], data[index2]] = [data[index2], data[index]];
-                    [data[index + 1], data[index2 + 1]] = [data[index2 + 1], data[index + 1]];
-                    [data[index + 2], data[index2 + 2]] = [data[index2 + 2], data[index + 2]];
+                if (grid[index] > grid[index2]) {
+                    data[index] = [data[index2], data[index2]=data[index]][0];
+                    data[index+1] = [data[index2+1], data[index2+1]=data[index+1]][0];
+                    data[index+2] = [data[index2+2], data[index2+2]=data[index+2]][0];
+                    grid[index] = [grid[index2], grid[index2]=grid[index]][0];
+                    grid[index+1] = [grid[index2+1], grid[index2+1]=grid[index+1]][0];
+                    grid[index+2] = [grid[index2+2], grid[index2+2]=grid[index+2]][0];
                     modified++;
                 }
             }
             if(y + 1 < canvasHeight) {
-                let c3 = rgbToHsl(data[index3], data[index3 + 1], data[index3 + 2]);
-                if (c1.l < c3.l) {
-                    [data[index], data[index3]] = [data[index3], data[index]];
-                    [data[index + 1], data[index3 + 1]] = [data[index3 + 1], data[index + 1]];
-                    [data[index + 2], data[index3 + 2]] = [data[index3 + 2], data[index + 2]];
+                if (grid[index + 2] > grid[index3 + 2]) {
+                    data[index] = [data[index3], data[index3]=data[index]][0];
+                    data[index+1] = [data[index3+1], data[index3+1]=data[index+1]][0];
+                    data[index+2] = [data[index3+2], data[index3+2]=data[index+2]][0];
+                    grid[index] = [grid[index3], grid[index3]=grid[index]][0];
+                    grid[index+1] = [grid[index3+1], grid[index3+1]=grid[index+1]][0];
+                    grid[index+2] = [grid[index3+2], grid[index3+2]=grid[index+2]][0];
                     modified++;
                 }
             }
@@ -57,11 +74,12 @@ self.onmessage = function (e) {
     let canvasData = e.data.canvasData;
     let canvasWidth = e.data.canvasWidth;
     let canvasHeight = e.data.canvasHeight;
+    generateGrid(canvasData, canvasWidth, canvasHeight);
     for(let i = 0; true; i += 1) {
         modified = 0;
         canvasData = sortPixelsHSL(canvasData, canvasWidth, canvasHeight);
         self.postMessage({ canvasData: canvasData, done: false });
-        if(modified < 500) {
+        if(modified < 100) {
             break;
         }
     }

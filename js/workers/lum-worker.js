@@ -11,9 +11,9 @@ function sortPixelsLum(data, canvasWidth, canvasHeight) {
             if(y + 1 < canvasHeight) {
                 let c2 = Math.sqrt( .241 * data[index2] + .691 * data[index2 + 1] + .068 * data[index2 + 2] );
                 if (c1 < c2) {
-                    [data[index], data[index2]] = [data[index2], data[index]];
-                    [data[index + 1], data[index2 + 1]] = [data[index2 + 1], data[index + 1]];
-                    [data[index + 2], data[index2 + 2]] = [data[index2 + 2], data[index + 2]];
+                    data[index] = [data[index2], data[index2]=data[index]][0];
+                    data[index+1] = [data[index2+1], data[index2+1]=data[index+1]][0];
+                    data[index+2] = [data[index2+2], data[index2+2]=data[index+2]][0];
                     modified++;
                 }
             }
